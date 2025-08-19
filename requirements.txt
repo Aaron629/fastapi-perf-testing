@@ -1,1 +1,6 @@
+fastapi
+uvicorn
 pytest
+requests
+httpx
+pytest-cov
