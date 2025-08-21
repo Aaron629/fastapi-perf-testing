@@ -18,8 +18,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.11' }
+      - name: Start local API if no secret
+        run: |
+          if [ -z "${TARGET_BASE_URL}" ]; then
+            TARGET_BASE_URL=http://127.0.0.1:8000
+            echo "TARGET_BASE_URL=$TARGET_BASE_URL" >> $GITHUB_ENV
+            uvicorn app.main:app --host 0.0.0.0 --port 8000 & 
+            for i in {1..30}; do curl -fsS $TARGET_BASE_URL/health && break || sleep 1; done
+          fi
       - run: make perf
       - if: always()
         uses: actions/upload-artifact@v4
         with: { name: perf-reports, path: reports/** }
- 
