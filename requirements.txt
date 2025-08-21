@@ -1,6 +1,6 @@
-fastapi
-uvicorn
-pytest
-requests
-httpx
-pytest-cov
+fastapi         # Web framework
+uvicorn         # 開發用 ASGI server (可本機啟動 API)
+pytest          # 測試框架
+pytest-cov      # 測試覆蓋率工具
+httpx           # 測試 HTTP 請求用
+requests        # 一般 HTTP 請求套件 (非必要，但常見)

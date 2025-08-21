@@ -1,0 +1,34 @@
+name: Performance Tests
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  perf-locust:
+    runs-on: ubuntu-latest
+    env:
+      TARGET_BASE_URL: ${{ secrets.TARGET_BASE_URL }}  # 在 Repo Secrets 設定
+      USERS: "60"
+      SPAWN_RATE: "8"
+      DURATION: "2m"
+      THRESHOLD_RT_P95_MS: "200"
+      THRESHOLD_ERROR_RATE: "0.01"
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+
+      - name: Run Locust (headless)
+        run: |
+          make perf
+
+      - name: Upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-reports
+          path: reports/
