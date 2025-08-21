@@ -1,60 +1,25 @@
 name: Performance Tests
-
 on:
   workflow_dispatch: {}
-  pull_request:
-    branches: [ main ]
-  push:
-    branches: [ main ]
+  pull_request: { branches: [main] }
+  push: { branches: [main] }
 
 jobs:
   perf-locust:
     runs-on: ubuntu-latest
     env:
+      TARGET_BASE_URL: ${{ secrets.TARGET_BASE_URL }}
       USERS: "60"
       SPAWN_RATE: "8"
       DURATION: "2m"
       THRESHOLD_RT_P95_MS: "200"
       THRESHOLD_ERROR_RATE: "0.01"
-
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      # 安裝依賴（依你的專案調整）
-      - name: Install deps
-        run: |
-          pip install -r requirements.txt || true
-          pip install -r requirements-perf.txt
-
-      # 若沒有設定 TARGET_BASE_URL secret，預設打本機 API
-      - name: Resolve TARGET_BASE_URL
-        run: |
-          if [ -z "${{ secrets.TARGET_BASE_URL }}" ]; then
-            echo "TARGET_BASE_URL=http://127.0.0.1:8000" >> $GITHUB_ENV
-          else
-            echo "TARGET_BASE_URL=${{ secrets.TARGET_BASE_URL }}" >> $GITHUB_ENV
-          fi
-
-      # 啟動你的 API（依你的啟動指令調整）
-      - name: Start API (background)
-        if: env.TARGET_BASE_URL == 'http://127.0.0.1:8000'
-        run: |
-          uvicorn app.main:app --host 0.0.0.0 --port 8000 & echo $! > api.pid
-          # 等待健康檢查就緒
-          for i in {1..30}; do
-            curl -fsS http://127.0.0.1:8000/health && break || sleep 1
-          done
-
-      - name: Run Locust (headless)
-        run: make perf
-
-      - name: Upload reports
-        if: always()
+        with: { python-version: '3.11' }
+      - run: make perf
+      - if: always()
         uses: actions/upload-artifact@v4
-        with:
-          name: perf-reports
-          path: reports/
+        with: { name: perf-reports, path: reports/** }
+ 
